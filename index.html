@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Electricity Billing Calculator</title>
+    <style>
+        /* CSS styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333333;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #666666;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100px;
+            padding: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #dddddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #333333;
+            font-weight: bold;
+        }
+
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 5px;
+        }
+
+        .result-section {
+            margin-bottom: 30px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas#pieChart {
+            margin: 20px auto;
+            display: block;
+            width: 400px;
+            height: 400px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // JavaScript code
+        function calculateBill() {
+            // Get input values
+            var units = parseFloat(document.getElementById("units").value);
+            var maxDemand = parseFloat(document.getElementById("maxDemand").value);
+            var customerType = document.getElementById("customerType").value;
+            var billingDate = new Date(document.getElementById("billingDate").value);
+
+            // Define slab rates and charges based on customer type
+            var slab1Rate, slab2Rate, slab3Rate, slab4Rate, fixedCharge, taxPercentage, discountPercentage;
+
+            if (customerType === "Domestic") {
+                slab1Rate = 3.0; // Rate for first slab (0 - 50 units)
+                slab2Rate = 4.8; // Rate for second slab (51 - 200 units)
+                slab3Rate = 5.8; // Rate for third slab (201 - 400 units)
+                slab4Rate = 6.2; // Rate for fourth slab (401+ units)
+
+                fixedCharge = 20; // Additional fixed charge in Rupees
+                taxPercentage = 4; // Tax percentage
+                discountPercentage = 4; // Discount percentage
+            } else if (customerType === "General Purpose") {
+                slab1Rate = 5.9; // Rate for first slab (0 - 100 units)
+                slab2Rate = 7.0; // Rate for second slab (101 - 300 units)
+                slab3Rate = 7.6; // Rate for third slab (301+ units)
+
+                fixedCharge = 30; // Additional fixed charge in Rupees
+                taxPercentage = 4; // Tax percentage
+                discountPercentage = 4; // Discount percentage
+            }
+
+            // Calculate bill amount based on slabs
+            var billAmount = 0;
+
+            if (customerType === "Domestic") {
+                if (units <= 50) {
+                    billAmount = units * slab1Rate;
+                } else if (units <= 200) {
+                    billAmount = 50 * slab1Rate + (units - 50) * slab2Rate;
+                } else {
+                    billAmount = 50 * slab1Rate + 150 * slab2Rate + (units - 200) * slab3Rate;
+                }
+            } else if (customerType === "General Purpose") {
+                if (units <= 100) {
+                    billAmount = units * slab1Rate;
+                } else if (units <= 300) {
+                    billAmount = 100 * slab1Rate + (units - 100) * slab2Rate;
+                } else {
+                    billAmount = 100 * slab1Rate + 200 * slab2Rate + (units - 300) * slab3Rate;
+                }
+            }
+
+            // Calculate electricity duty and MMFC
+            var electricityDuty = billAmount * (taxPercentage / 100);
+            var MMFC = fixedCharge;
+            var tmdfc = maxDemand * fixedCharge;
+
+            var discountpp = units * 0.1;
+            var currentTotal = electricityDuty + tmdfc + billAmount - discountpp;
+            var discountOnline = currentTotal * (discountPercentage / 100);
+            var currentTotal1 = electricityDuty + tmdfc + billAmount;
+            var discountOnline1 = currentTotal1 * (discountPercentage / 100);
+            // Calculate final bill if paying online
+            var finalAmountOnline = currentTotal - discountOnline;
+            var finalAmountOnline1 = currentTotal1 - discountOnline1;
+
+            // Calculate final bill
+            var finalAmount = currentTotal;
+            var finalAmount1 = currentTotal1;
+
+            // Calculate due date (7 days after billing date)
+            var dueDate = new Date(billingDate.getTime());
+            dueDate.setDate(dueDate.getDate() + 7);
+
+            // Display the result
+            document.getElementById("energyCharges").innerHTML = "Rs." + billAmount.toFixed(2);
+            document.getElementById("electricityDuty").innerHTML = "Rs." + electricityDuty.toFixed(2);
+            document.getElementById("tmdfc").innerHTML = "Rs." + tmdfc.toFixed(2);
+            document.getElementById("discountpp").innerHTML = "Rs." + discountpp.toFixed(2);
+            document.getElementById("discountOnline").innerHTML = "Rs." + discountOnline.toFixed(2);
+            document.getElementById("discountOnline1").innerHTML = "Rs." + discountOnline1.toFixed(2);
+            document.getElementById("dueDate").innerHTML = "" + dueDate.toDateString();
+            document.getElementById("finalAmountOnline").innerHTML = "Rs." + finalAmountOnline.toFixed(2);
+            document.getElementById("finalAmount").innerHTML = "Rs." + finalAmount.toFixed(2);
+            document.getElementById("finalAmountOnline1").innerHTML = "Rs." + finalAmountOnline1.toFixed(2);
+            document.getElementById("finalAmount1").innerHTML = "Rs." + finalAmount1.toFixed(2);
+
+            // Create and render the pie chart
+            var ctx = document.getElementById("pieChart").getContext("2d");
+            var chart = new Chart(ctx, {
+                type: "pie",
+                data: {
+                    labels: ["Energy Charges", "Electricity Duty", "Minimum Monthly Fixed Charge"],
+                    datasets: [{
+                        label: "Bill Components",
+                        data: [billAmount, electricityDuty, tmdfc],
+                        backgroundColor: ["#36A2EB", "#FFCE56", "#FF6384"],
+                        borderColor: "#FFFFFF"
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    title: {
+                        display: true,
+                        text: "Bill Components",
+                        fontSize: 18,
+                        fontColor: "#000000"
+                    }
+                }
+            });
+        }
+    </script>
+    <style>
+        /* CSS styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        .container {
+            width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .input-table th,
+        .input-table td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .input-table th {
+            width: 200px;
+            font-weight: bold;
+        }
+
+        .input-table td input[type="number"],
+        .input-table td select,
+        .input-table td input[type="date"] {
+            width: 100%;
+            padding: 5px;
+        }
+
+        .input-table td input[type="number"]::-webkit-inner-spin-button,
+        .input-table td input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .input-table td:last-child {
+            text-align: center;
+        }
+
+        .result-table {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .result-table th,
+        .result-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #dddddd;
+        }
+
+        .result-table th {
+            font-weight: bold;
+        }
+
+        .result-table td:last-child {
+            text-align: right;
+        }
+
+        #pieChart {
+            margin: 0 auto;
+            display: block;
+            width: 400px;
+            height: 400px;
+        }
+
+        .bill-summary {
+            margin-bottom: 40px;
+        }
+
+        .bill-summary p {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .bill-summary p span {
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+<h1>Electricity Billing Calculator</h1>
+<div class="container">
+    <table class="input-table">
+        <tr>
+            <th>Units Consumed:</th>
+            <td><input type="number" id="units" min="0" step="any"></td>
+        </tr>
+        <tr>
+            <th>Maximum Demand (kW):</th>
+            <td><input type="number" id="maxDemand" min="0" step="any"></td>
+        </tr>
+        <tr>
+            <th>Customer Type:</th>
+            <td>
+                <select id="customerType">
+                    <option value="Domestic">Domestic</option>
+                    <option value="General Purpose">General Purpose</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <th>Billing Date:</th>
+            <td><input type="date" id="billingDate"></td>
+        </tr>
+    </table>
+    <button onclick="calculateBill()">Calculate</button>
+
+    <div class="result-section">
+        <table class="result-table">
+            <tr>
+                <th colspan="2">Bill Details</th>
+            </tr>
+            <tr>
+                <td>Energy Charges:</td>
+                <td id="energyCharges"></td>
+            </tr>
+            <tr>
+                <td>Electricity Duty:</td>
+                <td id="electricityDuty"></td>
+            </tr>
+            <tr>
+                <td>Minimum Monthly Fixed Charges:</td>
+                <td id="tmdfc"></td>
+            </tr>
+            <tr>
+                <td>Prompt Payment Rebate (Applicable If paid before due date):</td>
+                <td id="discountpp"></td>
+            </tr>
+            <tr>
+                <td>Online Payment Discount:</td>
+                <td id="discountOnline"></td>
+            </tr>
+            <tr>
+                <td>Online Payment Discount (If paid after Due Date):</td>
+                <td id="discountOnline1"></td>
+            </tr>
+            <tr>
+                <td>Due Date:</td>
+                <td id="dueDate"></td>
+            </tr>
+            <tr>
+                <th>Total Bill (if Paid before Due Date and in Online mode):</th>
+                <td id="finalAmountOnline"></td>
+            </tr>
+            <tr>
+                <th>Total Bill (if Paid after Due Date):</th>
+                <td id="finalAmount"></td>
+            </tr>
+            <tr>
+                <th>Total Bill (if Paid after Due Date and in Online mode):</th>
+                <td id="finalAmountOnline1"></td>
+            </tr>
+            <tr>
+                <th>Total Bill (if Paid after Due Date):</th>
+                <td id="finalAmount1"></td>
+            </tr>
+        </table>
+        <canvas id="pieChart"></canvas>
+    </div>
+</div>
+</body>
+</html>
