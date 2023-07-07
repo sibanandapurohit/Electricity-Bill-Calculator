@@ -120,8 +120,11 @@
                     billAmount = units * slab1Rate;
                 } else if (units <= 200) {
                     billAmount = 50 * slab1Rate + (units - 50) * slab2Rate;
-                } else {
+                } else if(units <= 400){
                     billAmount = 50 * slab1Rate + 150 * slab2Rate + (units - 200) * slab3Rate;
+                }
+                  else {
+                      billAmount = 50 * slab1Rate + 150 * slab2Rate +  200 * slab3Rate + (units - 400) * slab4Rate;
                 }
             } else if (customerType === "General Purpose") {
                 if (units <= 100) {
