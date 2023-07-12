@@ -85,7 +85,7 @@
         // JavaScript code
         function calculateBill() {
             // Get input values
-            var units = parseFloat(document.getElementById("units").value);
+            var units = parseInt(document.getElementById("units").value);
             var maxDemand = parseFloat(document.getElementById("maxDemand").value);
             var customerType = document.getElementById("customerType").value;
             var billingDate = new Date(document.getElementById("billingDate").value);
@@ -115,19 +115,24 @@
             // Calculate bill amount based on slabs
             var billAmount = 0;
 
-            if (customerType === "Domestic") {
-                if (units <= 50) {
+            if (customerType === "Domestic"){
+                if (units <= 0) {
+                    billAmount = 0;
+                }
+                else if (units <= 50) {
                     billAmount = units * slab1Rate;
                 } else if (units <= 200) {
                     billAmount = 50 * slab1Rate + (units - 50) * slab2Rate;
                 } else if(units <= 400){
                     billAmount = 50 * slab1Rate + 150 * slab2Rate + (units - 200) * slab3Rate;
                 }
-                  else {
-                      billAmount = 50 * slab1Rate + 150 * slab2Rate +  200 * slab3Rate + (units - 400) * slab4Rate;
+                  else {billAmount = 50 * slab1Rate + 150 * slab2Rate +  200 * slab3Rate + (units - 400) * slab4Rate;}
+            } else if (customerType === "General Purpose"){
+            if (units <= 0) {
+                    billAmount = 0;
                 }
-            } else if (customerType === "General Purpose") {
-                if (units <= 100) {
+
+               else if (units <= 100) {
                     billAmount = units * slab1Rate;
                 } else if (units <= 300) {
                     billAmount = 100 * slab1Rate + (units - 100) * slab2Rate;
@@ -139,9 +144,12 @@
             // Calculate electricity duty and MMFC
             var electricityDuty = billAmount * (taxPercentage / 100);
             var MMFC = fixedCharge;
-            var tmdfc = maxDemand * fixedCharge;
-
-            var discountpp = units * 0.1;
+            if(maxDemand<=0) {var tmdfc=0;}
+            else{var tmdfc = maxDemand * fixedCharge;}
+            if(units<= 0){
+              var discountpp = 0;
+            }
+            else {var discountpp = units * 0.1;}
             var currentTotal = electricityDuty + tmdfc + billAmount - discountpp;
             var discountOnline = currentTotal * (discountPercentage / 100);
             var currentTotal1 = electricityDuty + tmdfc + billAmount;
@@ -303,7 +311,7 @@
             <td><input type="number" id="units" min="0" step="any"></td>
         </tr>
         <tr>
-            <th>Maximum Demand (kW):</th>
+            <th>Maximum Demand (KW):</th>
             <td><input type="number" id="maxDemand" min="0" step="any"></td>
         </tr>
         <tr>
